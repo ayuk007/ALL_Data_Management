@@ -69,7 +69,7 @@ class Data_Manager:
         self.collections.insert_one(self.project_info)
 
     def delete_record(self):
-        pass
+        self.collections.delete_one({"project_name": self.project_name})
 
     def update_record(self):
         pass
