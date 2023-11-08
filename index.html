@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multipart Folder Upload</title>
+</head>
+<body>
+    <input type="file" id="folderInput" webkitdirectory directory multiple>
+    <button onclick="uploadFolder()">Upload</button>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <div id="status"></div>
+
+    <script>
+        async function uploadFolder() {
+            const folderInput = document.getElementById('folderInput');
+            const files = folderInput.files;
+
+            const formData = new FormData();
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const path = file.webkitRelativePath; // Get the relative path
+
+                formData.append('files[]', file, path);
+            }
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const status = document.getElementById('status');
+                status.innerText = 'Folder uploaded successfully!';
+            }
+        }
+    </script>
+</body>
+</html>
