@@ -14,24 +14,45 @@
             const folderInput = document.getElementById('folderInput');
             const files = folderInput.files;
 
-            const formData = new FormData();
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const path = file.webkitRelativePath; // Get the relative path
-
-                formData.append('files[]', file, path);
+            if (files.length === 0) {
+                alert('No files selected for upload.');
+                return;
             }
 
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData,
-            });
+            const chunkSize = 250; // Adjust this value based on your preference
 
-            if (response.ok) {
-                const status = document.getElementById('status');
-                status.innerText = 'Folder uploaded successfully!';
+            for (let i = 0; i < files.length; i += chunkSize) {
+                const formData = new FormData();
+
+                for (let j = i; j < i + chunkSize && j < files.length; j++) {
+                    const file = files[j];
+                    formData.append('files[]', file, file.webkitRelativePath);
+                }
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData,
+                        onUploadProgress: (progressEvent) => {
+                            const progressBar = document.getElementById('progressBar');
+                            progressBar.value = (progressEvent.loaded / progressEvent.total) * 100;
+                        }
+                    });
+
+                    if (response.ok) {
+                        console.log(`Uploaded files ${i + 1} to ${Math.min(i + chunkSize, files.length)}`);
+                    } else {
+                        throw new Error('Failed to upload folder.');
+                    }
+                } catch (error) {
+                    console.error('Error uploading folder:', error);
+                    alert('An error occurred while uploading the folder.');
+                    return; // Break out of the loop on error
+                }
             }
+
+            const status = document.getElementById('status');
+            status.innerText = 'Folder uploaded successfully!';
         }
     </script>
 </body>
