@@ -2,10 +2,11 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-
+const cors = require('cors');
 const app = express();
 const port = 5000;
 
+app.use(cors());
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const relativePath = path.join('uploads', path.dirname(file.originalname));
@@ -24,10 +25,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.use(express.static(__dirname));
-
 app.post('/upload', upload.array('files[]'), (req, res) => {
-    res.send('Folder uploaded successfully!');
+    res.json({message: 'Folder uploaded successfully!'});
 });
 
 app.listen(port, () => {
