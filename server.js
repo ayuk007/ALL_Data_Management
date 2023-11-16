@@ -2,31 +2,45 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors');
+
 const app = express();
 const port = 5000;
 
-app.use(cors());
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const relativePath = path.join('uploads', path.dirname(file.originalname));
-        const fullPath = path.join(__dirname, relativePath);
+        const projectName = req.body.projectName;
+        const fileType = req.body.fileType;
 
-        if (!fs.existsSync(fullPath)){
-            fs.mkdirSync(fullPath, { recursive: true });
+        const baseUploadsPath = path.join(__dirname, 'uploads');
+        const projectFolderPath = path.join(baseUploadsPath, projectName);
+
+        // Create project folder if it doesn't exist
+        if (!fs.existsSync(projectFolderPath)) {
+            fs.mkdirSync(projectFolderPath, { recursive: true });
         }
 
-        cb(null, relativePath);
+        // Determine file type folder (img or txt)
+        const fileTypeFolder = fileType === 'img' ? 'image' : 'txt';
+        const fileTypeFolderPath = path.join(projectFolderPath, fileTypeFolder);
+
+        // Create file type folder if it doesn't exist
+        if (!fs.existsSync(fileTypeFolderPath)) {
+            fs.mkdirSync(fileTypeFolderPath, { recursive: true });
+        }
+
+        cb(null, fileTypeFolderPath);
     },
     filename: (req, file, cb) => {
-        cb(null, path.basename(file.originalname));
+        cb(null, file.originalname);
     }
 });
 
 const upload = multer({ storage: storage });
 
+app.use(express.static(__dirname));
+
 app.post('/upload', upload.array('files[]'), (req, res) => {
-    res.json({message: 'Folder uploaded successfully!'});
+    res.send('Files uploaded successfully!');
 });
 
 app.listen(port, () => {

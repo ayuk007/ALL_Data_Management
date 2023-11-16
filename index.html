@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multipart File Upload</title>
+</head>
+<body>
+    <label for="projectName">Project Name:</label>
+    <input type="text" id="projectName">
+
+    <h2>Text Files</h2>
+    <input type="file" id="textFiles" multiple>
+
+    <h2>Image Files</h2>
+    <input type="file" id="imageFiles" accept="image/*" multiple>
+
+    <button onclick="uploadFiles()">Upload</button>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <div id="status"></div>
+
+    <script>
+        async function uploadFiles() {
+            const projectName = document.getElementById('projectName').value;
+            const textFilesInput = document.getElementById('textFiles');
+            const imageFilesInput = document.getElementById('imageFiles');
+
+            const textFiles = textFilesInput.files;
+            const imageFiles = imageFilesInput.files;
+
+            if (textFiles.length === 0 && imageFiles.length === 0) {
+                alert('No files selected for upload.');
+                return;
+            }
+
+            const chunkSize = 250; // Adjust this value based on your preference
+
+            // Upload text files
+            await uploadFileChunks(textFiles, projectName, 'txt');
+
+            // Upload image files
+            await uploadFileChunks(imageFiles, projectName, 'img');
+
+            const status = document.getElementById('status');
+            status.innerText = 'Files uploaded successfully!';
+        }
+
+        async function uploadFileChunks(files, projectName, fileType) {
+            const chunkSize = 250;
+
+            for (let i = 0; i < files.length; i += chunkSize) {
+                const formData = new FormData();
+
+                for (let j = i; j < i + chunkSize && j < files.length; j++) {
+                    const file = files[j];
+                    formData.append('files[]', file, file.name);
+                }
+
+                formData.append('projectName', projectName);
+                formData.append('fileType', fileType);
+
+                try {
+                    const response = await fetch('/uploads', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            // Add any necessary headers here
+                        },
+                        onUploadProgress: (progressEvent) => {
+                            const progressBar = document.getElementById('progressBar');
+                            progressBar.value = (progressEvent.loaded / progressEvent.total) * 100;
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to upload files.');
+                    }
+                } catch (error) {
+                    console.error('Error uploading files:', error);
+                    alert('An error occurred while uploading files.');
+                    return; // Break out of the loop on error
+                }
+            }
+        }
+    </script>
+</body>
+</html>
